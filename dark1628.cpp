@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 		strcpy(input, file.c_str());
 
 		fp = fopen(input, "rb");
-		//cout << input << endl;	// 파일 fopen 확인
+		cout << input << endl;	// 파일 fopen 확인
 
 		fread(inimg, sizeof(unsigned short) * imageSize, 1, fp);
 
@@ -68,9 +68,8 @@ int main(int argc, char** argv)
 	// MTF_V.raw - DarkMap
 	memset(inimg, 0, sizeof(unsigned short) * imageSize);
 
-	char MTF_V[100] = "./S1_1628x1628/MTF_V.raw";
 
-	fp = fopen(MTF_V, "rb");
+	fp = fopen("./S1_1628x1628/MTF_V.raw", "rb");
 
 	fread(inimg, sizeof(unsigned short) * imageSize, 1, fp);
 
@@ -110,12 +109,9 @@ void dirfile()
 
 	while (out != -1)
 	{
-		//char path[100] = "./S1_1628x1628/Dark/";
-		//strcat(path, fd.name);
 		fn.push_back(fd.name);
 
 		out = _findnext(handle, &fd);
-		//cout << path << endl;
 	}
 
 	_findclose(handle);

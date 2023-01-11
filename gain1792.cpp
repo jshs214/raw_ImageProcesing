@@ -9,97 +9,79 @@
 using namespace std;
 void dirfile();
 
-vector<string> fn;
+vector<string> fn;	//디렉토리 내 파일명을 저장할 벡터
 
 int main(int argc, char** argv)
 {
 	FILE* fp, * outfp;
 	char input[100];
-	char output[100] = "Pre_2.raw";
-	char averageData[] = "GainMap.raw";
+	char output[100] = "Pre_2(1792).raw";
+	char averageData[] = "GainMap(1792).raw";
 
 	unsigned short* inimg, * outimg;
-	unsigned short* averageimg, * gainAverageimg;
-
+	unsigned short* averageimg;
+	float* f_averageimg;
 	//디렉토리 내 파일 찾기
 	dirfile();
 
-	int width = 1536;
-	int height = 1536;
+	int width = 1792;
+	int height = 1792;
 	int imageSize = width * height;
 
 	inimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
 	outimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
 	averageimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	gainAverageimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
+	f_averageimg = (float*)malloc(sizeof(float) * imageSize);
 
 	memset(averageimg, 0, sizeof(unsigned short) * imageSize);
-	memset(gainAverageimg, 0, sizeof(unsigned short) * imageSize);
-
+	memset(f_averageimg, 0, sizeof(float) * imageSize);
 	vector<string>::iterator iter;
 	iter = fn.begin();
-	int cnt = 0, divcnt = 0;
-	for (iter = fn.begin(); iter != fn.end(); iter++) {
+
+	for (iter = fn.begin(); iter != fn.end(); iter++) {	
 		memset(input, 0, sizeof(char) * 100);
 		memset(inimg, 0, sizeof(unsigned short) * imageSize);
 
-		char path[100] = "./S1_1628x1628/Gain/";
+		char path[100] = "./S3_1792x1792/Gain/";
 		string file = path + *iter;
-		strcpy(input, file.c_str());
 
-		fp = fopen(input, "rb");
-		//cout << input << endl;	// 파일 fopen 확인
+		if ((fp = fopen(file.c_str(), "rb")) == NULL) {
+			printf("Not Exist folder or file");
+			return -1;
+		}
+		//cout << file << endl;	// 파일 fopen 확인
 
 		fread(inimg, sizeof(unsigned short) * imageSize, 1, fp);
 
-		if (cnt == 8) {
-			for (int i = 0; i < imageSize; i++) {
-				*(averageimg + i) += inimg[i];
-				*(gainAverageimg + i) += *(averageimg + i) / cnt;
-			}
-			divcnt++;
-			cnt = 0;
-			memset(averageimg, 0, sizeof(unsigned short) * imageSize);
+		for (int i = 0; i < imageSize; i++) {
+			*(f_averageimg + i) += inimg[i];
 		}
-		else {
-			for (int i = 0; i < imageSize; i++) {
-				*(averageimg + i) += inimg[i];
-			}
-		}
-		cnt++;
 
 		fclose(fp);
 	}
 
-	if (cnt > 0) {
-		divcnt++;
-		for (int i = 0; i < imageSize; i++) {
-			*(gainAverageimg + i) += *(averageimg + i) / cnt;
-			*(gainAverageimg + i) = *(gainAverageimg + i) / divcnt;
-		}
+	for (int i = 0; i < imageSize; i++) {
+		*(f_averageimg + i) = *(f_averageimg + i) / 101;
+		 *(averageimg + i) = *(f_averageimg + i);
 	}
 
 	outfp = fopen(averageData, "wb");
 
-	fwrite(gainAverageimg, sizeof(unsigned short) * imageSize, 1, outfp);
+	fwrite(averageimg, sizeof(unsigned short) * imageSize, 1, outfp);	// GainMap write.
 	fclose(outfp);
 
-	// MTF_V.raw - DarkMap
+	// MTF_H.raw - GainMap
 	memset(inimg, 0, sizeof(unsigned short) * imageSize);
 
-	char MTF_V[100] = "./S1_1628x1628/MTF_V.raw";
-
-	fp = fopen(MTF_V, "rb");
-
+	fp = fopen("./S3_1792x1792/MTF_H.raw", "rb");
 	fread(inimg, sizeof(unsigned short) * imageSize, 1, fp);
 
 	for (int i = 0; i < imageSize; i++) {
-		if (inimg[i] - *(gainAverageimg + i) >= 0)
-			outimg[i] = inimg[i] - *(gainAverageimg + i);
+		if (inimg[i] - *(averageimg + i) >= 0)
+			outimg[i] = inimg[i] - *(averageimg + i);
 		else
-			outimg[i] = *(gainAverageimg + i) - inimg[i];
+			outimg[i] = *(averageimg + i) - inimg[i];
 	}
-
 
 	outfp = fopen(output, "wb");
 
@@ -120,7 +102,7 @@ void dirfile()
 	_finddata_t fd;
 	long handle;
 	int out = 1;
-	handle = _findfirst("./S1_1628x1628/Gain/*.raw", &fd);  //현재 폴더 내 모든 파일을 찾는다.
+	handle = _findfirst("./S3_1792x1792/Gain/*.raw", &fd);  //현재 폴더 내 모든 파일을 찾는다.
 
 	if (handle == -1)
 	{
