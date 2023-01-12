@@ -4,21 +4,24 @@
 #include <vector>
 #include <iostream>
 #include <io.h>
-#include <conio.h>
+//#include <conio.h>
 
 using namespace std;
 
-void dirDarkfile();
-void dirGainfile();
-void darkMap();
-void darkProcessing();
-void gainMap();
-void gainProcessing();
+typedef unsigned short ushort;
 
-vector<string> darkfn;
-vector<string> gainfn;
+void dirDarkfile();		// 지정된 경로의 Dark 디렉토리 내 모든 raw파일을 darkfn 벡터에 pushback 하는 함수 
+void dirGainfile();		// 지정된 경로의 Gain 디렉토리 내 모든 raw파일을 gainfn 벡터에 pushback 하는 함수 
+void darkMap();			// darkfn의 평균값으로 darkMap.raw 생성 함수
+void darkProcessing();	// 원본이미지 - darkMap 함수
+void gainMap();			// gainfn의 평균값으로 darkMap.raw 생성 함수
 
-void callibration();
+void gainProcessing();	// 원본이미지 - GainMap 함수
+
+vector<string> darkfn;	// Dark 디렉토리 내 raw파일들을 저장하고 있는 벡터
+vector<string> gainfn;	// Gain 디렉토리 내 raw파일들을 저장하고 있는 벡터
+
+void callibration();	// 연산 함수
 
 int main()
 {
@@ -27,6 +30,7 @@ int main()
 	darkMap();
 	darkProcessing();
 	gainMap();
+
 	gainProcessing();
 
 	callibration();
@@ -39,25 +43,25 @@ void darkMap() {
 	FILE* infp, * outfp;
 	char savefile[] = "./output(1628x1628)/DarkMap(1628).raw";
 
-	unsigned short* inimg, * outimg;
+	ushort* inimg, * outimg;
 	float* f_averageimg;
 
 	int width = 1628;
 	int height = 1628;
 	int imageSize = width * height;
 
-	inimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	outimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
+	inimg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
 	f_averageimg = (float*)malloc(sizeof(float) * imageSize);
 
-	memset(inimg, 0, sizeof(unsigned short) * imageSize);
-	memset(outimg, 0, sizeof(unsigned short) * imageSize);
+	memset(inimg, 0, sizeof(ushort) * imageSize);
+	memset(outimg, 0, sizeof(ushort) * imageSize);
 	memset(f_averageimg, 0, sizeof(float) * imageSize);
 
 	vector<string>::iterator iter;
 	iter = darkfn.begin();
 	for (iter = darkfn.begin(); iter != darkfn.end(); iter++) {
-		memset(inimg, 0, sizeof(unsigned short) * imageSize);
+		memset(inimg, 0, sizeof(ushort) * imageSize);
 		char path[100] = "./S1_1628x1628/Dark/";
 		string file = path + *iter;
 
@@ -68,7 +72,7 @@ void darkMap() {
 			return;
 		}
 
-		fread(inimg, sizeof(unsigned short) * imageSize, 1, infp);
+		fread(inimg, sizeof(ushort) * imageSize, 1, infp);
 
 		for (int i = 0; i < imageSize; i++) {
 			*(f_averageimg + i) += inimg[i];
@@ -85,7 +89,7 @@ void darkMap() {
 		printf("%d No such file or folder\n", __LINE__);
 		return;
 	}
-	fwrite(outimg, sizeof(unsigned short) * imageSize, 1, outfp);
+	fwrite(outimg, sizeof(ushort) * imageSize, 1, outfp);
 
 	free(inimg);
 	free(outimg);
@@ -100,15 +104,15 @@ void darkProcessing() {
 	int imageSize = width * height;
 	char savefile[] = "./output(1628x1628)/DarkProcessing(1628).raw";
 
-	unsigned short* darkMapImg, * MTF_VImg, *outimg;
+	ushort* darkMapImg, * MTF_VImg, *outimg;
 
-	darkMapImg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	MTF_VImg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	outimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
+	darkMapImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	MTF_VImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
 	
-	memset(darkMapImg, 0, sizeof(unsigned short) * imageSize);
-	memset(MTF_VImg, 0, sizeof(unsigned short) * imageSize);
-	memset(outimg, 0, sizeof(unsigned short) * imageSize);
+	memset(darkMapImg, 0, sizeof(ushort) * imageSize);
+	memset(MTF_VImg, 0, sizeof(ushort) * imageSize);
+	memset(outimg, 0, sizeof(ushort) * imageSize);
 
 	if ((darkMapFp = fopen("./output(1628x1628)/DarkMap(1628).raw", "rb")) == NULL) {
 		printf("No such file or folder\n");
@@ -119,8 +123,8 @@ void darkProcessing() {
 		return;
 	}
 
-	fread(darkMapImg, sizeof(unsigned short) * imageSize, 1, darkMapFp);
-	fread(MTF_VImg, sizeof(unsigned short) * imageSize, 1, MTF_VFp);
+	fread(darkMapImg, sizeof(ushort) * imageSize, 1, darkMapFp);
+	fread(MTF_VImg, sizeof(ushort) * imageSize, 1, MTF_VFp);
 	fclose(darkMapFp);
 	fclose(MTF_VFp);
 
@@ -135,7 +139,7 @@ void darkProcessing() {
 		printf("%d No such file or folder\n", __LINE__);
 		return;
 	}
-	fwrite(outimg, sizeof(unsigned short) * imageSize, 1, outfp);
+	fwrite(outimg, sizeof(ushort) * imageSize, 1, outfp);
 
 	fclose(outfp);
 
@@ -148,36 +152,35 @@ void gainMap() {
 	FILE* infp, * outfp;
 	char savefile[] = "./output(1628x1628)/GainMap(1628).raw";
 
-	unsigned short* inimg, * outimg;
+	ushort* inimg, * outimg;
 	float* f_averageimg;
 
 	int width = 1628;
 	int height = 1628;
 	int imageSize = width * height;
 
-	inimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	outimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
+	inimg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
 	f_averageimg = (float*)malloc(sizeof(float) * imageSize);
 
-	memset(inimg, 0, sizeof(unsigned short) * imageSize);
-	memset(outimg, 0, sizeof(unsigned short) * imageSize);
+	memset(inimg, 0, sizeof(ushort) * imageSize);
+	memset(outimg, 0, sizeof(ushort) * imageSize);
 	memset(f_averageimg, 0, sizeof(float) * imageSize);
 
 	vector<string>::iterator iter;
 	iter = gainfn.begin();
 	for (iter = gainfn.begin(); iter != gainfn.end(); iter++) {
-		memset(inimg, 0, sizeof(unsigned short) * imageSize);
+		memset(inimg, 0, sizeof(ushort) * imageSize);
 		char path[100] = "./S1_1628x1628/Gain/";
 		string file = path + *iter;
 
 		//cout << file << endl;	// 파일 fopen 확인
-
 		if ((infp = fopen(file.c_str(), "rb")) == NULL) {
 			printf("No such file or folder\n");
 			return;
 		}
 
-		fread(inimg, sizeof(unsigned short) * imageSize, 1, infp);
+		fread(inimg, sizeof(ushort) * imageSize, 1, infp);
 
 		for (int i = 0; i < imageSize; i++) {
 			*(f_averageimg + i) += inimg[i];
@@ -194,7 +197,7 @@ void gainMap() {
 		printf("%d No such file or folder\n", __LINE__);
 		return;
 	}
-	fwrite(outimg, sizeof(unsigned short) * imageSize, 1, outfp);
+	fwrite(outimg, sizeof(ushort) * imageSize, 1, outfp);
 
 	free(inimg);
 	free(outimg);
@@ -209,15 +212,15 @@ void gainProcessing() {
 	int imageSize = width * height;
 	char savefile[] = "./output(1628x1628)/GainProcessing(1628).raw";
 
-	unsigned short* gainMapImg, * MTF_VImg, * outimg;
+	ushort* gainMapImg, * MTF_VImg, * outimg;
 
-	gainMapImg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	MTF_VImg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	outimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
+	gainMapImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	MTF_VImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
 
-	memset(gainMapImg, 0, sizeof(unsigned short) * imageSize);
-	memset(MTF_VImg, 0, sizeof(unsigned short) * imageSize);
-	memset(outimg, 0, sizeof(unsigned short) * imageSize);
+	memset(gainMapImg, 0, sizeof(ushort) * imageSize);
+	memset(MTF_VImg, 0, sizeof(ushort) * imageSize);
+	memset(outimg, 0, sizeof(ushort) * imageSize);
 
 	if ((gainMapFp = fopen("./output(1628x1628)/GainMap(1628).raw", "rb")) == NULL) {
 		printf("No such file or folder\n");
@@ -228,8 +231,8 @@ void gainProcessing() {
 		return;
 	}
 
-	fread(gainMapImg, sizeof(unsigned short) * imageSize, 1, gainMapFp);
-	fread(MTF_VImg, sizeof(unsigned short) * imageSize, 1, MTF_VFp);
+	fread(gainMapImg, sizeof(ushort) * imageSize, 1, gainMapFp);
+	fread(MTF_VImg, sizeof(ushort) * imageSize, 1, MTF_VFp);
 	fclose(gainMapFp);
 	fclose(MTF_VFp);
 
@@ -244,7 +247,7 @@ void gainProcessing() {
 		printf("%d No such file or folder\n", __LINE__);
 		return;
 	}
-	fwrite(outimg, sizeof(unsigned short) * imageSize, 1, outfp);
+	fwrite(outimg, sizeof(ushort) * imageSize, 1, outfp);
 
 	fclose(outfp);
 
@@ -254,30 +257,33 @@ void gainProcessing() {
 }
 
 void callibration() {
-	FILE* gainMapFp, * darkMapFp, * MTF_VFp, *outfp;
-
-	int width = 1628;
-	int height = 1628;
-	int imageSize = width * height;
+	FILE* GainMapFp, * darkMapFp, * MTF_VFp, *outfp;
 	char savefile[] = "./output(1628x1628)/callibration(1628).raw";
 
-	unsigned short * darkMapImg, * gainMapImg,* MTF_VImg, *outimg;
+	int width = 1628, height = 1628, widthcnt = 0;
+	int imageSize = width * height;
+	int subImageSize = (width - 200) * (height - 200);
+	double subGainSum = 0, subGainAvg = 0;
 
-	darkMapImg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	gainMapImg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	MTF_VImg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
-	outimg = (unsigned short*)malloc(sizeof(unsigned short) * imageSize);
+	ushort * darkMapImg, * GainMapImg,* MTF_VImg, * subGainImg, *outimg;
 
-	memset(darkMapImg, 0, sizeof(unsigned short) * imageSize);
-	memset(gainMapImg, 0, sizeof(unsigned short) * imageSize);
-	memset(MTF_VImg, 0, sizeof(unsigned short) * imageSize);
-	memset(outimg, 0, sizeof(unsigned short) * imageSize);
+	darkMapImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	GainMapImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	MTF_VImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	subGainImg = (ushort*)malloc(sizeof(ushort) * subImageSize);
+
+	memset(darkMapImg, 0, sizeof(ushort) * imageSize);
+	memset(GainMapImg, 0, sizeof(ushort) * imageSize);
+	memset(MTF_VImg, 0, sizeof(ushort) * imageSize);
+	memset(outimg, 0, sizeof(ushort) * imageSize);
+	memset(subGainImg, 0, sizeof(ushort) * subImageSize);
 
 	if ((darkMapFp = fopen("./output(1628x1628)/DarkMap(1628).raw", "rb")) == NULL) {
 		printf("No such file or folder\n");
 		return;
 	}
-	if ((gainMapFp = fopen("./output(1628x1628)/GainMap(1628).raw", "rb")) == NULL) {
+	if ((GainMapFp = fopen("./output(1628x1628)/GainMap(1628).raw", "rb")) == NULL) {
 		printf("No such file or folder\n");
 		return;
 	}
@@ -286,17 +292,36 @@ void callibration() {
 		return;
 	}
 
-	fread(darkMapImg, sizeof(unsigned short) * imageSize, 1, darkMapFp);
-	fread(gainMapImg, sizeof(unsigned short) * imageSize, 1, gainMapFp);
-	fread(MTF_VImg, sizeof(unsigned short) * imageSize, 1, MTF_VFp);
+	fread(darkMapImg, sizeof(ushort) * imageSize, 1, darkMapFp);
+	fread(GainMapImg, sizeof(ushort) * imageSize, 1, GainMapFp);
+	fread(MTF_VImg, sizeof(ushort) * imageSize, 1, MTF_VFp);
 
 	fclose(darkMapFp);
-	fclose(gainMapFp);
+	fclose(GainMapFp);
 	fclose(MTF_VFp);
 
+	int j = 0;
+	/* subGain image load*/
+	for (int i = 0; i < imageSize; i++) {
+		widthcnt++;
+		if (widthcnt == width) widthcnt = 0;
+
+		if (width * 100 > i || width * (height - 100) < i) continue;
+		if (widthcnt <= 100 || widthcnt > 1528) continue;
+
+		subGainImg[j] = GainMapImg[i];
+		subGainSum += subGainImg[j];
+		j++;
+	}
+
+	subGainAvg = subGainSum / subImageSize ;
+	printf("Sum : %f \n", subGainSum);
+	printf("mean : %f\n", subGainAvg);
+
+	/* 연산 for 문*/
 	for (int i = 0; i < imageSize; i++) {
 		*(outimg + i) = 
-		 (unsigned short) (abs( *(MTF_VImg + i) - ( *(darkMapImg + i) ) ) / (float)( *(gainMapImg + i) )  * ( *(gainMapImg + i) ) );
+		 (ushort) ( abs( *(MTF_VImg + i) - ( *(darkMapImg + i) ) ) / (float)( *(GainMapImg + i) )  * subGainAvg );
 	}
 
 
@@ -305,13 +330,14 @@ void callibration() {
 		return;
 	}
 
-	fwrite(outimg, sizeof(unsigned short) * imageSize, 1, outfp);
+	fwrite(outimg, sizeof(ushort) * imageSize, 1, outfp);
 
 	fclose(outfp);
 
-	free(gainMapImg);
+	free(GainMapImg);
 	free(darkMapImg);
 	free(MTF_VImg);
+	free(subGainImg);
 	free(outimg);
 }
 
