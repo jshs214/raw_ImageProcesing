@@ -3,7 +3,7 @@
 #include <string.h>
 #include <vector>
 #include <iostream>
-#include <io.h>
+#include <string>
 #include <filesystem>
 
 using namespace std;
@@ -38,13 +38,13 @@ int main()
 
 void darkMap() {
 	FILE* infp, * outfp;
-	char savefile[] = "./output(1628x1628)/DarkMap(1628).raw";
+	char savefile[] = "./output(1792x1792)/DarkMap(1792).raw";
 
 	ushort* inimg, * outimg;
 	float* f_averageimg;
 
-	int width = 1628;
-	int height = 1628;
+	int width = 1792;
+	int height = 1792;
 	int imageSize = width * height;
 
 	inimg = (ushort*)malloc(sizeof(ushort) * imageSize);
@@ -57,64 +57,8 @@ void darkMap() {
 
 	vector<string>::iterator iter;
 	iter = darkfn.begin();
+
 	for (iter = darkfn.begin(); iter != darkfn.end(); iter++) {
-		memset(inimg, 0, sizeof(ushort) * imageSize);
-		string file = *iter;
-
-		//cout << file << endl;	// 파일 fopen 확인
-
-		if ((infp = fopen(file.c_str(), "rb")) == NULL) {
-			printf("No such file or folder\n");
-			return;
-		}
-
-		fread(inimg, sizeof(ushort) * imageSize, 1, infp);
-
-		for (int i = 0; i < imageSize; i++) {
-			*(f_averageimg + i) += inimg[i];
-		}
-
-		fclose(infp);
-	}
-
-	for (int i = 0; i < imageSize; i++) {
-		* (outimg + i) = *(f_averageimg + i) / 101;
-	}
-
-	if ((outfp = fopen(savefile, "wb")) == NULL) {
-		printf("%d No such file or folder\n", __LINE__);
-		return;
-	}
-	fwrite(outimg, sizeof(ushort) * imageSize, 1, outfp);
-
-	free(inimg);
-	free(outimg);
-	free(f_averageimg);
-	fclose(outfp);
-}
-
-void gainMap() {
-	FILE* infp, * outfp;
-	char savefile[] = "./output(1628x1628)/GainMap(1628).raw";
-
-	ushort* inimg, * outimg;
-	float* f_averageimg;
-
-	int width = 1628;
-	int height = 1628;
-	int imageSize = width * height;
-
-	inimg = (ushort*)malloc(sizeof(ushort) * imageSize);
-	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
-	f_averageimg = (float*)malloc(sizeof(float) * imageSize);
-
-	memset(inimg, 0, sizeof(ushort) * imageSize);
-	memset(outimg, 0, sizeof(ushort) * imageSize);
-	memset(f_averageimg, 0, sizeof(float) * imageSize);
-
-	vector<string>::iterator iter;
-	iter = gainfn.begin();
-	for (iter = gainfn.begin(); iter != gainfn.end(); iter++) {
 		memset(inimg, 0, sizeof(ushort) * imageSize);
 		string file = *iter;
 
@@ -149,48 +93,106 @@ void gainMap() {
 	fclose(outfp);
 }
 
-void callibration() {
-	FILE* GainMapFp, * darkMapFp, * MTF_VFp, *outfp;
-	char savefile[] = "./output(1628x1628)/callibration(1628).raw";
+void gainMap() {
+	FILE* infp, * outfp;
+	char savefile[] = "./output(1792x1792)/GainMap(1792).raw";
 
-	int width = 1628, height = 1628;
+	ushort* inimg, * outimg;
+	float* f_averageimg;
+
+	int width = 1792;
+	int height = 1792;
+	int imageSize = width * height;
+
+	inimg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	f_averageimg = (float*)malloc(sizeof(float) * imageSize);
+
+	memset(inimg, 0, sizeof(ushort) * imageSize);
+	memset(outimg, 0, sizeof(ushort) * imageSize);
+	memset(f_averageimg, 0, sizeof(float) * imageSize);
+
+	vector<string>::iterator iter;
+	iter = gainfn.begin();
+	for (iter = gainfn.begin(); iter != gainfn.end(); iter++) {
+		memset(inimg, 0, sizeof(ushort) * imageSize);
+
+		string file = *iter;
+		//cout << file << endl;	// 파일 fopen 확인
+
+		if ((infp = fopen(file.c_str(), "rb")) == NULL) {
+			printf("No such file or folder\n");
+			return;
+		}
+
+		fread(inimg, sizeof(ushort) * imageSize, 1, infp);
+
+		for (int i = 0; i < imageSize; i++) {
+			*(f_averageimg + i) += inimg[i];
+		}
+
+		fclose(infp);
+	}
+
+
+	for (int i = 0; i < imageSize; i++) {
+		*(outimg + i) = *(f_averageimg + i) / 101;
+	}
+
+	if ((outfp = fopen(savefile, "wb")) == NULL) {
+		printf("%d No such file or folder\n", __LINE__);
+		return;
+	}
+	fwrite(outimg, sizeof(ushort) * imageSize, 1, outfp);
+
+	free(inimg);
+	free(outimg);
+	free(f_averageimg);
+	fclose(outfp);
+}
+
+void callibration() {
+	FILE* GainMapFp, * darkMapFp, * MTF_HFp, * outfp;
+	char savefile[] = "./output(1792x1792)/callibration(1792).raw";
+
+	int width = 1792, height = 1792;
 	int imageSize = width * height;
 	int subImageSize = (width - 200) * (height - 200);
 	double subGainSum = 0, subGainAvg = 0;
 
-	ushort * darkMapImg, * GainMapImg,* MTF_VImg, *outimg;
+	ushort* darkMapImg, * GainMapImg, * MTF_HImg, * outimg;
 
 	darkMapImg = (ushort*)malloc(sizeof(ushort) * imageSize);
 	GainMapImg = (ushort*)malloc(sizeof(ushort) * imageSize);
-	MTF_VImg = (ushort*)malloc(sizeof(ushort) * imageSize);
+	MTF_HImg = (ushort*)malloc(sizeof(ushort) * imageSize);
 	outimg = (ushort*)malloc(sizeof(ushort) * imageSize);
 
 
 	memset(darkMapImg, 0, sizeof(ushort) * imageSize);
 	memset(GainMapImg, 0, sizeof(ushort) * imageSize);
-	memset(MTF_VImg, 0, sizeof(ushort) * imageSize);
+	memset(MTF_HImg, 0, sizeof(ushort) * imageSize);
 	memset(outimg, 0, sizeof(ushort) * imageSize);
 
-	if ((darkMapFp = fopen("./output(1628x1628)/DarkMap(1628).raw", "rb")) == NULL) {
+	if ((darkMapFp = fopen("./output(1792x1792)/DarkMap(1792).raw", "rb")) == NULL) {
 		printf("No such file or folder\n");
 		return;
 	}
-	if ((GainMapFp = fopen("./output(1628x1628)/GainMap(1628).raw", "rb")) == NULL) {
+	if ((GainMapFp = fopen("./output(1792x1792)/GainMap(1792).raw", "rb")) == NULL) {
 		printf("No such file or folder\n");
 		return;
 	}
-	if ((MTF_VFp = fopen("./S1_1628x1628/MTF_V.raw", "rb")) == NULL) {
+	if ((MTF_HFp = fopen("./S3_1792x1792/MTF_H.raw", "rb")) == NULL) {
 		printf("No such file or folder\n");
 		return;
 	}
 
 	fread(darkMapImg, sizeof(ushort) * imageSize, 1, darkMapFp);
 	fread(GainMapImg, sizeof(ushort) * imageSize, 1, GainMapFp);
-	fread(MTF_VImg, sizeof(ushort) * imageSize, 1, MTF_VFp);
+	fread(MTF_HImg, sizeof(ushort) * imageSize, 1, MTF_HFp);
 
 	fclose(darkMapFp);
 	fclose(GainMapFp);
-	fclose(MTF_VFp);
+	fclose(MTF_HFp);
 
 	int j = 0;
 
@@ -198,24 +200,24 @@ void callibration() {
 	int widthcnt = 0;
 	for (int i = 0; i < imageSize; i++) {
 		widthcnt = i % width;
-		if (widthcnt == width-1 ) widthcnt = 0;
+		if (widthcnt == width - 1) widthcnt = 0;
 
 		if (width * 100 > i || width * (height - 100) < i) continue;
-		if ( widthcnt <= 100 || widthcnt > 1528) continue;
+		if (widthcnt <= 100 || widthcnt > 1692) continue;
 
 		subGainSum += GainMapImg[i];
 		j++;
 	}
-	 
-	subGainAvg = subGainSum / subImageSize ;
+
+	subGainAvg = subGainSum / subImageSize;
 	printf("pixel count : %d\n", j);
 	printf("Sum : %f \n", subGainSum);
 	printf("mean : %f\n", subGainAvg);
 
 	/* 연산 for 문*/
 	for (int i = 0; i < imageSize; i++) {
-		*(outimg + i) = 
-		 (ushort) ( abs( *(MTF_VImg + i) - ( *(darkMapImg + i) ) ) / (float)( *(GainMapImg + i) )  * subGainAvg );
+		*(outimg + i) =
+			(ushort)(abs(*(MTF_HImg + i) - (*(darkMapImg + i))) / (float)(*(GainMapImg + i)) * subGainAvg);
 	}
 
 
@@ -230,14 +232,14 @@ void callibration() {
 
 	free(GainMapImg);
 	free(darkMapImg);
-	free(MTF_VImg);
+	free(MTF_HImg);
 	free(outimg);
 }
 
 // dark 디렉토리 내 파일 찾기 함수
 void dirDarkfile()
 {
-	string path = "./S1_1628x1628/Dark/";
+	string path = "./S3_1792x1792/Dark/";
 
 	for (const auto& file : directory_iterator(path)) {
 		std::string filepath{ file.path().u8string() };
@@ -250,7 +252,7 @@ void dirDarkfile()
 // Gain 디렉토리 내 파일 찾기 함수
 void dirGainfile()
 {
-	string path = "./S1_1628x1628/Gain/";
+	string path = "./S3_1792x1792/Gain/";
 
 	for (const auto& file : directory_iterator(path)) {
 		std::string filepath{ file.path().u8string() };
