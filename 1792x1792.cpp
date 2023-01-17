@@ -205,7 +205,7 @@ void callibration() {
 		if (width * 100 > i || width * (height - 100) < i) continue;
 		if (widthcnt <= 100 || widthcnt > 1692) continue;
 
-		subGainSum += GainMapImg[i];
+		subGainSum += GainMapImg[i]- darkMapImg[i];
 		j++;
 	}
 
@@ -217,7 +217,7 @@ void callibration() {
 	/* ¿¬»ê for ¹®*/
 	for (int i = 0; i < imageSize; i++) {
 		*(outimg + i) =
-			(ushort)(abs(*(MTF_HImg + i) - (*(darkMapImg + i))) / (float)(*(GainMapImg + i)) * subGainAvg);
+			(ushort)(abs(*(MTF_HImg + i) - (*(darkMapImg + i))) / (float)( *(GainMapImg + i) - *(darkMapImg + i) ) * subGainAvg);
 	}
 
 
