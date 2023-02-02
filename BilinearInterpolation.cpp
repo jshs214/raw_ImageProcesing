@@ -19,8 +19,8 @@ int main()
 
 void histo() {
     FILE* infp, * outfp;
-    char inputfile[] = "./grid6CLAHE.raw";
-    char outfile[] = "./CLAHE_Interpolation_.jpg";
+    char inputfile[] = "./grid10CLAHE.raw";
+    char outfile[] = "./CLAHE_Interpolation_.raw";
 
     float* inimg, * outimg;
 
@@ -30,26 +30,13 @@ void histo() {
 
     int offset;
 
-    int grid = 6, cnt = 0;
+    int grid = 10, cnt = 0;
 
     inimg = (float*)malloc(sizeof(float) * imageSize);
     outimg = (float*)malloc(sizeof(float) * imageSize);
 
     memset(inimg, 0, sizeof(float) * imageSize);
     memset(outimg, 0, sizeof(float) * imageSize);
-    
-    FILE* histofp;
-    char histofile[] = "./histoTest.raw";
-    float* histoimg;
-    histoimg = (float*)malloc(sizeof(float) * imageSize);
-    memset(histoimg, 0, sizeof(float) * imageSize);
-
-    if ((histofp = fopen(histofile, "rb")) == NULL) {
-        printf("No such file or folder\n");
-        return;
-    }
-    fread(histoimg, sizeof(float) * imageSize, 1, histofp);
-    fclose(histofp);
     
 
     if ((infp = fopen(inputfile, "rb")) == NULL) {
@@ -59,40 +46,40 @@ void histo() {
     fread(inimg, sizeof(float) * imageSize, 1, infp);
     fclose(infp);
 
+    float value = 0.0;
+    float z, t, s, w ,ul, ur, bl, br;
 
-    float rx, ry, p, q;
-    int value;
-    int x1, x2, y1, y2;
-
-    float result = 0.0;
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            int offset = x + (y * width);
-
-            rx = (float)(grid - 1) * x / (width - 1);
-            ry = (float)(grid - 1) * y / (height - 1);
-
-            x1 = (int)rx;
-            y1 = (int)ry;
-
-            x2 = x1 + 1; if (x2 == grid) x2 = grid - 1;
-            y2 = y1 + 1; if (y2 == grid) y2 = grid - 1;
-
-            p = rx - x1;
-            q = ry - y1;
-
-            value = (1. - p) * (1. - q) * histoimg[x1 + (y1 * width)]
-                + p * (1. - q) * histoimg[x2 + (y1 * width)]
-                + (1. - p) * q * histoimg[x1 + (y2 * width)]
-                + p * q * histoimg[x2 + (y2 * width)];
-
-            result = LIMIT_UBYTE( (value + .5) - histoimg[offset] );
+    for (int y = grid; y < height - grid; y +=grid) {
+        for (int x = grid; x < width - grid; x +=grid) {
+            //int offset = x + (y * width);
+            value = 0.0;
             
-            outimg[offset] = abs(65535 - result);
+            for (int i = 0; i < grid; i++) {
+                for (int j = 0; j < grid; j++) {
+                    int offset = (x+j) + ((y+i) * width);
+
+                    z = inimg[(x - grid +j) + (y * width)];
+                    t = inimg[(grid - j -1) + (y * width)];
+                    w = inimg[x + ( (y - grid + i) * width)];
+                    s = inimg[x + ( (grid - i + 1) * width)];
+
+                    ul = inimg[x + grid/2 + ((y+grid/2) * width)];
+                    ur = inimg[x + grid / 2 + grid + ((y + grid / 2) * width)];
+
+                    bl = inimg[x + grid / 2 + ((y + grid / 2 + grid) * width)];
+                    br = inimg[x + grid / 2 + grid + ((y + grid / 2 + grid) * width)];
+
+
+                    value = (s / (s + w)) * ((t / (z + t)) * ul + (z / (z + t)) * bl)
+                        + (w / (s + w)) * ((t / (z + t)) * ur + (z / (z + t)) * br);
+
+                    outimg[offset] = LIMIT_UBYTE(value);
+                }
+            }
+
+
         }
     }
-
-
 
     if ((outfp = fopen(outfile, "wb")) == NULL) {
         fprintf(stderr, "cannot open this file");
@@ -103,7 +90,6 @@ void histo() {
 
     free(inimg);
     free(outimg);
-    free(histoimg);
 
     fclose(outfp);
 }
